@@ -1,0 +1,59 @@
+variables:
+  DOCKER_TLS_CERTDIR: ""
+
+before_script:
+  - echo "Starting..."
+stages:
+  - build
+  - deploy
+  - release
+
+build-master:
+  image: docker:18-git
+  stage: build
+  services:
+    - docker:18-dind
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+  script:
+    - apk add --update curl
+    - apk upgrade -f
+    - curl -o build.sh https://tailoredvideowiki.s3-eu-west-1.amazonaws.com/static/ci-cd/build.sh
+    - chmod +X build.sh
+    - source build.sh $AWS_ECR_ACCOUNT_URL videowiki transcriber-cronjob-service
+  only:
+    - master
+
+deploy-production:
+  image: docker:18-git
+  stage: deploy
+  dependencies:
+    - build-master
+  services:
+    - docker:18-dind
+  script:
+    - apk add --update curl
+    - apk upgrade -f
+    - curl -o deploy.sh https://tailoredvideowiki.s3-eu-west-1.amazonaws.com/static/ci-cd/deploy.sh
+    - chmod +X deploy.sh
+    - source deploy.sh $AWS_ECR_ACCOUNT_URL videowiki transcriber-cronjob-service
+  when: manual
+  only:
+    - master
+
+release-version:
+  image: docker:18-git
+  stage: release
+  dependencies:
+    - build-master
+  services:
+    - docker:18-dind
+  script:
+    - apk add --update curl
+    - apk upgrade -f
+    - curl -o release.sh https://tailoredvideowiki.s3-eu-west-1.amazonaws.com/static/ci-cd/release.sh
+    - chmod +X release.sh
+    - source release.sh $AWS_ECR_ACCOUNT_URL videowiki transcriber-cronjob-service $RELEASE_VERSION_NUMBER
+  when: manual
+  only:
+    - master
