@@ -5,7 +5,7 @@ const path = require('path');
 const { updateItemPermissions, saveFile } = require('./vendors/storage');
 
 const { queues, TRANSCRIPTIONSCRIPTS_DIRECTORY } = require('./constants');
-const { TRANSCRIBE_FINISH_QUEUE } = queues;
+const { TRANSCRIBE_FINISH_QUEUE, TRANSCRIBE_VIDEO_FAILED_QUEUE } = queues;
 
 const videoHandler = require('./dbHandlers/video');
 const transcribeService = require('./vendors/transcribe');
@@ -58,6 +58,17 @@ module.exports = (channel) => {
                                                     console.log(err)
                                                     cb()
                                                 })
+                                        } else if (status && status.toLowerCase() === 'failed') {
+                                            videoHandler.updateById(video._id, { status: 'failed' })
+                                            .then(() => {
+                                            })
+                                            .catch(err => {
+                                                console.log(err);
+                                            })
+                                            console.log('video failed', video.videoId)
+                                            channel.sendToQueue(TRANSCRIBE_VIDEO_FAILED_QUEUE, new Buffer(JSON.stringify({ videoId: video.videoId })), { persistent: true });
+                                            doneCount++;
+                                            cb();
                                         } else {
                                             pendingCount++;
                                             setTimeout(() => {
@@ -110,6 +121,17 @@ module.exports = (channel) => {
                                                         cb();
                                                     })
                                             })
+                                        } else if (status && status.toLowerCase() === 'failed') {
+                                            videoHandler.updateById(video._id, { status: 'failed' })
+                                            .then(() => {
+                                            })
+                                            .catch(err => {
+                                                console.log(err);
+                                            })
+                                            console.log('video failed', video.videoId)
+                                            channel.sendToQueue(TRANSCRIBE_VIDEO_FAILED_QUEUE, new Buffer(JSON.stringify({ videoId: video.videoId })), { persistent: true });
+                                            doneCount++;
+                                            cb();
                                         } else {
                                             pendingCount++;
                                             setTimeout(() => {
