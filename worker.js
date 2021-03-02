@@ -1,6 +1,6 @@
 const fs = require('fs');
 const neededDirs = ['tmp'];
-const videowikiGenerators = require('@videowiki/generators');
+const generators = require('@comet-anuvaad/generators');
 try {
     neededDirs.forEach((dir) => {
         if (!fs.existsSync(dir)) {
@@ -55,7 +55,7 @@ mongoose.connect(DB_CONNECTION_URL)
 
         require('./cronJobs')(channel)
 
-        const { server, app } = videowikiGenerators.serverGenerator({ uploadLimit: 50 })
+        const { server, app } = generators.serverGenerator({ uploadLimit: 50 })
         
         app.get('/health', (req, res) => {
             const { readyState } = mongoConnection;
