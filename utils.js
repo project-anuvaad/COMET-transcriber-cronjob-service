@@ -21,7 +21,6 @@ function getLangDelimiter(langCode) {
 
 function downloadFile(url, targetPath) {
     return new Promise((resolve, reject) => {
-        // https://tailoredvideowiki.s3.eu-west-1.amazonaws.com/videos/1.mp4
         exec(`curl ${url} --output ${targetPath}`, (err) => {
             if (err) {
                 return reject(err);
